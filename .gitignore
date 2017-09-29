@@ -1,0 +1,4 @@
+.DS_Store
+bash/.bash_secure
+bash/.bash_company
+vim/vimfiles/plugged

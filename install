@@ -1,0 +1,19 @@
+﻿<# &>/dev/null
+  dir="${HOME}/src2"
+  
+  mkdir -p ${dir}
+  cd ${dir}
+  git clone --recursive git://github.com/TechIsCool/dotfiles.git
+  cd dotfiles
+  sudo bash bootstrap.sh
+  read -p "Press any key to exit..."
+  exit
+#>
+
+
+$dir="${HOME}/src2"
+mkdir -p ${dir}
+cd ${dir}
+git clone --recursive git://github.com/TechIsCool/dotfiles.git
+cd dotfiles
+bootstrap.ps1
