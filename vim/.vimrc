@@ -9,39 +9,44 @@ call plug#begin('~/.vim/plugged')
     endif
   endfunction
   
-  " Syntax Plugins
-  Plug 'pearofducks/ansible-vim'  " syntax plugin for Ansible 2.0
-  Plug 'PProvost/vim-ps1'         " syntax coloring and indenting for Windows PowerShell
-  Plug 'b4b4r07/vim-hcl'          " syntax plugin for HCL
-  Plug 'fatih/vim-go'             " syntax plugin for Go
-  Plug 'hashivim/vim-terraform'   " syntax plugin for Terraform
-  let g:terraform_fmt_on_save = 1 " Auto Format Terraform on Write
-  Plug 'tpope/tpope-vim-abolish'  " Support for Case Sensitive Replace
-  Plug 'Chiel92/vim-autoformat'   " Code Auto Formatter
-  let g:autoformat_autoindent = 0
-  let g:autoformat_retab = 0
-  let g:autoformat_remove_trailing_spaces = 0
-  au BufWrite * :Autoformat
+  " Syntax
+    " Highlighting
+    Plug 'pearofducks/ansible-vim'  " syntax plugin for Ansible 2.0
+    Plug 'PProvost/vim-ps1'         " syntax coloring and indenting for Windows PowerShell
+    Plug 'b4b4r07/vim-hcl'          " syntax plugin for HCL
+    Plug 'fatih/vim-go'             " syntax plugin for Go
+    Plug 'hashivim/vim-terraform'   " syntax plugin for Terraform
   
-  " Code Checkers
-  Plug 'scrooloose/syntastic'
-  Plug 'juliosueiras/vim-terraform-completion' " Auto Completion
+    " Formatting
+    Plug 'tpope/tpope-vim-abolish'  " Support for Case Sensitive Replace
+    Plug 'Chiel92/vim-autoformat'   " Code Auto Formatter
+    let g:autoformat_autoindent = 0
+    let g:autoformat_retab = 0
+    let g:autoformat_remove_trailing_spaces = 0
+    let g:terraform_fmt_on_save = 1 " Auto Format Terraform on Write
+    au BufWrite * :Autoformat
+    
+    " Code Checkers
+    Plug 'scrooloose/syntastic'                  " syntax checking
+    Plug 'juliosueiras/vim-terraform-completion' " Auto Completion
+
   
   " Control Plugins
-  Plug 'kien/ctrlp.vim' 
-  Plug 'tpope/vim-commentary' " Comment stuff out.
+  Plug 'kien/ctrlp.vim'         " Fuzzy file, buffer, mru, tag, etc finder. 
+  Plug 'tpope/vim-commentary'   " Comment stuff out.
   Plug 'Valloric/YouCompleteMe' " fast, as-you-type, fuzzy-search code completion engin
   
   " Git Plugins
   Plug 'airblade/vim-gitgutter' "git diff in the 'gutter' (sign column)
-  Plug 'tpope/vim-fugitive' " View any blob, tree, commit, or tag in the repository
+  Plug 'tpope/vim-fugitive'     " View any blob, tree, commit, or tag in the repository
   
   " UI Plugins
-  Plug 'itchyny/lightline.vim' " light and configurable statusline/tabline 
+  Plug 'itchyny/lightline.vim'            " light and configurable statusline/tabline 
   Plug 'altercation/vim-colors-solarized' " Solarized Colorscheme
 call plug#end()
 
 set number                     " Print the line number in front of each line.
+set scrolloff=10                " Minimum number of screen lines above/below the cursor.
 set ruler                      " Show the line and column number of the cursor position
 set paste                      " Set Paste so that it does not retab
 set showcmd                    " Show (partial) command in the last line of the screen.

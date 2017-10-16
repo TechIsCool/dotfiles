@@ -23,7 +23,8 @@ function Convert-ToDiskSize {
 }
 
 function Disable-WakeTasks {
-  Get-ScheduledTask | `
-    where {$_.settings.waketorun} | `
-    Disable-ScheduledTask
+  $Tasks = Get-ScheduledTask | `
+    where {$_.settings.waketorun -and $_.state -ne 'Disabled'}
+  Write-Output $Tasks
+  $Tasks | Disable-ScheduledTask
 }
