@@ -16,16 +16,17 @@ call plug#begin('~/.vim/plugged')
       \ { 'do': 'cp -r ~/.vim/monkey-patch/vim-ps1/ .' } " syntax coloring and indenting for Windows PowerShell
     Plug 'b4b4r07/vim-hcl'                               " syntax plugin for HCL
     Plug 'fatih/vim-go'                                  " syntax plugin for Go
+      let g:go_fmt_command = "goimports"
     Plug 'hashivim/vim-terraform'                        " syntax plugin for Terraform
   
     " Formatting
     Plug 'tpope/tpope-vim-abolish'  " Support for Case Sensitive Replace
     Plug 'Chiel92/vim-autoformat'   " Code Auto Formatter
-    let g:autoformat_autoindent = 0
-    let g:autoformat_retab = 0
-    let g:autoformat_remove_trailing_spaces = 0
-    let g:terraform_fmt_on_save = 1 " Auto Format Terraform on Write
-    au BufWrite * :Autoformat
+      let g:autoformat_autoindent = 0
+      let g:autoformat_retab = 0
+      let g:autoformat_remove_trailing_spaces = 0
+      let g:terraform_fmt_on_save = 1 " Auto Format Terraform on Write
+      au BufWrite * :Autoformat
     Plug 'https://gist.github.com/PeterRincker/582ea9be24a69e6dd8e237eb877b8978.git',
       \ { 'as': 'SortGroup', 'do': 'mkdir plugin; mv -f *.vim plugin/', 'on': 'SortGroup' } " Sort Multi Line Groups
     
@@ -63,7 +64,8 @@ silent! colorscheme solarized
 
 if exists(':SyntasticCheck') " Validate Syntastic is Functional
   let g:syntastic_ruby_checkers            = ['rubocop']
-  let g:syntastic_ruby_rubocop_exec        = '/opt/chefdk/bin/rubocop'
+  let g:syntastic_ruby_rubocop_exec        = '/usr/local/bin/cookstyle'
+  let g:syntastic_python_checkers            = ['flake8']
   let g:syntastic_always_populate_loc_list = 1
   let g:syntastic_auto_loc_list            = 1
   let g:syntastic_check_on_open            = 1
