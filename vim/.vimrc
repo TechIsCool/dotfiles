@@ -16,8 +16,8 @@ call plug#begin('~/.vim/plugged')
       \ { 'do': 'cp -r ~/.vim/monkey-patch/vim-ps1/ .' } " syntax coloring and indenting for Windows PowerShell
     Plug 'fatih/vim-go', { 'for': ['go'] }               " syntax plugin for Go
       let g:go_fmt_command = "goimports"
-    Plug 'b4b4r07/vim-hcl', { 'for': ['hcl'] }           " syntax plugin for HCL
-    Plug 'hashivim/vim-terraform', { 'for': ['hcl'] }    " syntax plugin for Terraform
+    Plug 'b4b4r07/vim-hcl', { 'for': ['hcl','terraform'] }           " syntax plugin for HCL
+    Plug 'hashivim/vim-terraform', { 'for': ['hcl','terraform'] }    " syntax plugin for Terraform
       let g:terraform_fmt_on_save = 1 
 
     " Formatting
@@ -28,9 +28,8 @@ call plug#begin('~/.vim/plugged')
       let g:autoformat_remove_trailing_spaces = 0
       let g:formatdef_ruby_cookstyle = "'/usr/local/bin/cookstyle --auto-correct --out /dev/null --stdin '.bufname('%').' \| sed -n 2,\\$p'"
       let g:formatters_ruby = ['ruby_cookstyle']
-
       au BufWrite * :Autoformat
-    Plug 'https://gist.github.com/PeterRincker/582ea9be24a69e6dd8e237eb877b8978.git',
+    Plug 'https://gist.github.com/TechIsCool/0be56d68fbf9eb767e595b4c4df0508b.git',
       \ { 'as': 'SortGroup', 'do': 'mkdir plugin; mv -f *.vim plugin/', 'on': 'SortGroup' } " Sort Multi Line Groups
     
     " Code Checkers
@@ -43,15 +42,19 @@ call plug#begin('~/.vim/plugged')
       let g:syntastic_check_on_open            = 1
       let g:syntastic_check_on_wq              = 0
       set statusline+=%{SyntasticStatuslineFlag()} " show Syntastic flag
-    Plug 'juliosueiras/vim-terraform-completion'   " Auto Completion
+
+    Plug 'https://gist.github.com/TechIsCool/0e080232d9e8871f9611a4e9a6f0ab91.git',
+      \ { 'as': 'TerraformCompleteOpenDoc', 'do': 'mkdir plugin; mv -f *.vim plugin/', 'for': ['hcl','terraform']} " Terraform OpenDoc
+      noremap <buffer><silent> <Leader>o :call terraformcomplete#OpenDoc()<CR>
   
   " Control Plugins
   Plug 'kien/ctrlp.vim'                                         " Fuzzy file, buffer, mru, tag, etc finder. 
   Plug 'tpope/vim-commentary'                                   " Comment stuff out.
   Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') } " fast, as-you-type, fuzzy-search code completion engin
+      let g:enable_ycm_at_startup = 0
   
   " Git Plugins
-  Plug 'airblade/vim-gitgutter' "git diff in the 'gutter' (sign column)
+  Plug 'airblade/vim-gitgutter', { 'commit': 'c92f61acdc1841292b539a8515a88ed811eafa3f' } " git diff in the 'gutter' (sign column)
   Plug 'tpope/vim-fugitive'     " View any blob, tree, commit, or tag in the repository
   
   " UI Plugins
@@ -69,6 +72,10 @@ set statusline+=%#warningmsg#  " switch to warningmsg color
 set statusline+=%*             " back to normal color
 set backspace=indent,eol,start " Allows backspace to delete over line breaks
 set background=dark            " informs vim that the background color is dark
+
+" Expansion
+autocmd FileType sh iabbrev <buffer> shebang #!/bin/bash
+autocmd FileType xml setlocal shiftwidth=2 softtabstop=2 expandtab
 
 silent! colorscheme solarized
 
