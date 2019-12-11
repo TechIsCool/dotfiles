@@ -13,10 +13,35 @@
 # Github
 # export GITHUB_ORGANIZATION=''
 
+# Vault
+# export VAULT_ADDR='https://...:8200'
+
 # AWS
 # export AWS_PROFILE=''
 
 # JIRA
-export JIRA_PROJECTS="DEVOPS,OPS"
+# export JIRA_PROJECTS="DEVOPS,OPS"
 
+# override allowing calling like `ovr aws s3...`
+# define OVERRIDE <<-EOF
+#   AWS_PROFILE='override'
+#   CHEF_ORGANIZATION='override'
+#   DOMAIN_PASSWORD="${DOMAIN_OVERRIDE_PASSWORD}"
+# EOF
+# alias ovr=$(echo $OVERRIDE)
 
+# Vault Helper
+# vault_auth() {
+#   URL="${VAULT_ADDR}/v1/auth/ldap/login/${DOMAIN_USERNAME}"
+#   echo "Requesting Auth from ${URL}"
+#   
+#   RESULTS=$(curl \
+#     -s \
+#     --request POST \
+#     --data "{\"password\": \"${DOMAIN_PASSWORD}\"}" \
+#     ${URL})
+#   
+#     echo ${RESULTS} | jq -r 'del(.auth.client_token)'
+#     echo ${RESULTS} | jq -r .auth.client_token > $HOME/.vault-token
+# }
+# 
