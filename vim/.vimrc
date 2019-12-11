@@ -60,6 +60,11 @@ call plug#begin('~/.vim/plugged')
   " UI Plugins
   Plug 'itchyny/lightline.vim'            " light and configurable statusline/tabline 
   Plug 'altercation/vim-colors-solarized' " Solarized Colorscheme
+
+  " JSON Plugins
+  Plug 'mogelbrod/vim-jsonpath' " provides ways of navigating JSON document buffers.
+    au FileType json noremap <buffer> <silent> <expr> <leader>p jsonpath#echo()
+    au FileType json noremap <buffer> <silent> <expr> <leader>g jsonpath#goto()
 call plug#end()
 
 set number                     " Print the line number in front of each line.

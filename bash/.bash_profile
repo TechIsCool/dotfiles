@@ -38,6 +38,7 @@ alias branch-cleanup='git branch --merged | egrep -v "(^\*|master|dev)" | xargs 
 parse_git_branch() {
   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
 }
+alias cdg="cd $(git rev-parse --show-toplevel)" # Change to Root of Repo
 
 # VIM
 alias vi="vim"
@@ -81,7 +82,7 @@ alias py="pipenv run python"
 export HISTFILESIZE=
 export HISTSIZE=
 export HISTTIMEFORMAT="[%F %T] "
-export HISTCONTROL=ignoredups
+export HISTCONTROL='ignorespace:ignoredups'
 export HISTFILE=~/.bash_eternal_history
 PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 
@@ -116,4 +117,3 @@ if [ ! -S ~/.ssh/ssh_auth_sock ]; then
 fi
 export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
 ssh-add -l > /dev/null || ssh-add
-
