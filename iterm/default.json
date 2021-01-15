@@ -1,0 +1,11 @@
+{
+  "Profiles": [
+    {
+      "Name": "Default",
+      "Guid": "E3AD7A22-FA89-4085-94F2-AD05D5E6F233",
+      "Terminal Type" : "xterm-256color",
+      "Scrollback Lines" : 0,
+      "Unlimited Scrollback" : true
+    }
+  ]
+}

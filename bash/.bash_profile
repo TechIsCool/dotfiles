@@ -4,41 +4,63 @@ source ~/.bash_company
 
 # Auto-completion
 [[ $- == *i* ]] && source "/usr/local/opt/fzf/shell/completion.bash" 2> /dev/null
+[[ $- == *i* ]] && source "/usr/local/opt/fzf/shell/key-bindings.bash" 2> /dev/null
 
 # FZF
 if [[ ! "$PATH" == */usr/local/opt/fzf/bin* ]]; then
   export PATH="$PATH:/usr/local/opt/fzf/bin"
-
-  fvim() {
-    local IFS=$'\n'
-    local files=($(fzf-tmux --query="$1" --multi --select-1 --exit-0))
-    [[ -n "$files" ]] && ${EDITOR:-vim} "${files[@]}"
-  }
 fi
 
-# Key bindings
-source "/usr/local/opt/fzf/shell/key-bindings.bash"
+fvim() {
+  local IFS=$'\n'
+  local FILES=$(
+    fzf-tmux \
+      --query="$1" \
+      --multi \
+      --select-1 \
+      --exit-0)
+  [[ -n "$FILES" ]] && ${EDITOR:-vim} "${FILES[@]}"
+}
 bind -x '"\C-p": fvim'
 
 # BREW
 export HOMEBREW_NO_INSTALL_CLEANUP=1
 
 # GREP
-alias grep="grep -I"
+alias grep="grep --binary-file=without-match"
 
-# Copy/Paste
+# Formatting
 alias clip="pbcopy"
+strip_colors() {
+  perl -pe 's/\[[0-9;]*[mGKF]//g'
+}
+
+# Reverse input
+alias tac="sed '1!G;h;\$!d'"
 
 # GO
 export GOPATH="$HOME/src/go"
 export PATH="$GOPATH/bin:$PATH"
 
 # GIT
-alias branch-cleanup='git branch --merged | egrep -v "(^\*|master|dev)" | xargs git branch -d'
-parse_git_branch() {
-  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+branch_cleanup() {
+  git branch --merged |\
+  egrep -v \
+    "(^\*|master|dev)" |\
+  xargs git branch -d
 }
-alias cdg="cd $(git rev-parse --show-toplevel)" # Change to Root of Repo
+
+parse_git_branch() {
+  git branch 2> /dev/null |\
+  sed \
+    -e '/^[^*]/d' \
+    -e 's/* \(.*\)/ (\1)/'
+}
+
+# Change to Root of Repo
+cdg() {
+  cd $(git rev-parse --show-toplevel)
+}
 
 # VIM
 alias vi="vim"
@@ -49,6 +71,14 @@ alias tf="terraform"
 export TF_CLI_ARGS_apply="-auto-approve=false"
 export TF_CLI_ARGS_destroy="-auto-approve=false"
 export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
+source ~/.bash_terraform
+
+# Kubernets
+fluxctl_ns() {
+  fluxctl \
+    --k8s-fwd-ns $(kubens -c) \
+  $@
+}
 
 # Ansible
 export ANSIBLE_HOST_KEY_CHECKING=False
@@ -78,6 +108,35 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 alias py="pipenv run python"
 
+# Diff
+unalias diff_sxs 2> /dev/null
+diff_sxs() {
+  diff \
+  --width=$COLUMNS \
+  --side-by-side \
+  --color
+}
+
+# Find and Replace
+regex_replace() {
+  perl -p -i -e \
+  "s|$1|$2|g"
+}
+
+find_replace() {
+  # Single Line Match
+  # Exclude dot files/folders
+  perl -p -i -e "s|$1|$2|g" \
+  $(find . -type f -not -path '*/\.*')
+}
+find_replace_string() {
+  # File is String with \n as line return
+  # Exclude dot files/folders
+  # s == "dot matches new line"
+  perl -0 -p -i -e "s|$1|$2|gs" \
+  $(find . -type f -not -path '*/\.*')
+}
+
 # Eternal bash history.
 export HISTFILESIZE=
 export HISTSIZE=
@@ -88,11 +147,11 @@ PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 
 # Shell
 export CLICOLOR=1
-export PS1="\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
+export PS1="\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\]  $ "
 
 # FZF
-bind -r "\C-j" #  unbind accept-line
-bind -x '"\C-j": fjira'
+# bind -r "\C-i" #  unbind accept-line
+# bind -x '"\C-i": fjira'
 fjira() {
   local IFS=$'\n'
   jira list \
@@ -117,3 +176,13 @@ if [ ! -S ~/.ssh/ssh_auth_sock ]; then
 fi
 export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
 ssh-add -l > /dev/null || ssh-add
+
+GITHUB_SSH_FINGERPRINT=$(ssh-keygen -E sha256 -lf ~/.ssh/GitHub)
+if ! [[ $(ssh-add -l | grep "${GITHUB_SSH_FINGERPRINT}") ]]; then
+  ssh-add -K ~/.ssh/GitHub
+fi
+
+BITBUCKET_SSH_FINGERPRINT=$(ssh-keygen -E sha256 -lf ~/.ssh/bitbucket)
+if ! [[ $(ssh-add -l | grep "${BITBUCKET_SSH_FINGERPRINT}") ]]; then
+  ssh-add -K ~/.ssh/bitbucket
+fi

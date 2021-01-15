@@ -1,0 +1,8 @@
+iterm2
+royal-tsx
+font-hack
+typora
+docker
+keepassx
+dbeaver-community
+gpg-suite-no-email

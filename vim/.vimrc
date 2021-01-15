@@ -61,6 +61,12 @@ call plug#begin('~/.vim/plugged')
   Plug 'itchyny/lightline.vim'            " light and configurable statusline/tabline 
   Plug 'altercation/vim-colors-solarized' " Solarized Colorscheme
 
+  " YAML Plugins
+  Plug 'lmeijvogel/vim-yaml-helper' " provides getting a full path in yaml
+    let g:vim_yaml_helper#always_get_root = 1
+    au FileType yaml noremap <buffer> <silent> <leader>p :YamlDisplayFullPath<CR>
+    au FileType yaml noremap <buffer> <silent> <leader>g :YamlGoToKey<CR>
+
   " JSON Plugins
   Plug 'mogelbrod/vim-jsonpath' " provides ways of navigating JSON document buffers.
     au FileType json noremap <buffer> <silent> <expr> <leader>p jsonpath#echo()
@@ -96,3 +102,8 @@ if has('gui_running') " running inside of a GUI
   set laststatus=2 "display the status line always
   set noshowmode " hides insert status for supporting lightline
 endif
+
+function! PatchJira()
+  %s/\`\`\`/{code}/g
+  %s/\`/**/g
+endfunction

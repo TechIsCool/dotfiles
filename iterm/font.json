@@ -1,0 +1,11 @@
+{
+    "Profiles": [
+        {
+            "Name": "Font_HackNerd",
+            "Description": "Font - HackNerd",
+            "Guid": "3BEBBCF8-0071-405B-904F-B7BBA8C02D99",
+            "Dynamic Profile Parent Name": "Default",
+            "Normal Font" : "HackNerdFontComplete-Regular 20"
+        }
+    ]
+}
