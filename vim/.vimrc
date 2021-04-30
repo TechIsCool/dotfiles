@@ -42,7 +42,6 @@ call plug#begin('~/.vim/plugged')
       let g:syntastic_check_on_open            = 1
       let g:syntastic_check_on_wq              = 0
       set statusline+=%{SyntasticStatuslineFlag()} " show Syntastic flag
-
     Plug 'https://gist.github.com/TechIsCool/0e080232d9e8871f9611a4e9a6f0ab91.git',
       \ { 'as': 'TerraformCompleteOpenDoc', 'do': 'mkdir plugin; mv -f *.vim plugin/', 'for': ['hcl','terraform']} " Terraform OpenDoc
       noremap <buffer><silent> <Leader>o :call terraformcomplete#OpenDoc()<CR>
@@ -55,6 +54,7 @@ call plug#begin('~/.vim/plugged')
   
   " Git Plugins
   Plug 'airblade/vim-gitgutter', { 'commit': 'c92f61acdc1841292b539a8515a88ed811eafa3f' } " git diff in the 'gutter' (sign column)
+      let g:gitgutter_max_signs = 10000
   Plug 'tpope/vim-fugitive'     " View any blob, tree, commit, or tag in the repository
   
   " UI Plugins

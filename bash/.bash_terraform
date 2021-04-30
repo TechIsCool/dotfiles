@@ -32,6 +32,12 @@ tf_target() {
   echo ${RETURN}
 }
 
+tf_migrate_role_datasource() {
+  perl -0 -p -e \
+  's|(resource\s+"aws_iam_role"\s+")(.*?)(".*?{.*?)<<EOF(.*?)EOF(.*})|print qx{echo '\''$4'\'' \| iam-policy-json-to-terraform -name $2 };print "\n",$1,$2,$3,"data.aws_iam_policy_document.$2.json",$5,"\n";|gse' |\
+   sed '/^[1]$/d'
+}
+
 alias tf_move="terraform-state-mover"
 
 tf_target_rm() {

@@ -13,6 +13,7 @@ docker-credential-helper-ecr
 docker-ls
 docker-machine
 dos2unix
+dyff
 fluxctl
 fzf
 geoip
@@ -20,6 +21,7 @@ git
 git-extras
 glide
 gnu-sed
+go@1.16
 govendor
 gox
 graphviz

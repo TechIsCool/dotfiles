@@ -1,0 +1,22 @@
+[user]
+	name = David Beck
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[diff "dyff"]
+	command = "echo \"$2\n$5\"; \
+	           dyff \
+		     --color on \
+		     --omit-header \
+		     --detect-kubernetes \
+		     between \
+		     \"$2\" \"$5\" \
+		   || git diff \
+		     --no-ext-diff \
+		     --no-index \
+		     \"$2\" \"$5\" \
+		   || exit_code=$?"
+[core]
+	attributesfile = ~/.gitattributes
+	excludesfile = ~/.gitignore
+[include]
+	path = ~/.gitcompany
