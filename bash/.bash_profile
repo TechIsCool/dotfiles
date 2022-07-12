@@ -11,6 +11,20 @@ if [[ ! "$PATH" == */usr/local/opt/fzf/bin* ]]; then
   export PATH="$PATH:/usr/local/opt/fzf/bin"
 fi
 
+zdd() {
+  local dir
+  dir="$(
+    find "${1:-.}" -path '*/\.*' -prune -o -type d -print 2> /dev/null \
+      | fzf +m \
+          --preview='tree -C {} | head -n $FZF_PREVIEW_LINES' \
+          --preview-window='right:hidden:wrap' \
+          --bind=ctrl-v:toggle-preview \
+          --bind=ctrl-x:toggle-sort \
+          --header='(view:ctrl-v) (sort:ctrl-x)' \
+  )" || return
+  history -s cd "$dir" && cd "$dir" || return
+}
+
 fvim() {
   local IFS=$'\n'
   local FILES=$(
@@ -19,7 +33,7 @@ fvim() {
       --multi \
       --select-1 \
       --exit-0)
-  [[ -n "$FILES" ]] && ${EDITOR:-vim} "${FILES[@]}"
+  [[ -n "$FILES" ]] && ${EDITOR:-vim} ${FILES[@]}
 }
 bind -x '"\C-p": fvim'
 
@@ -41,6 +55,7 @@ alias tac="sed '1!G;h;\$!d'"
 # GO
 export GOPATH="$HOME/src/go"
 export PATH="$GOPATH/bin:$PATH"
+export GODEBUG=asyncpreemptoff=1 # https://yaleman.org/post/2021/2021-01-01-apple-m1-terraform-and-golang/
 
 # GIT
 branch_cleanup() {
@@ -48,6 +63,26 @@ branch_cleanup() {
   egrep -v \
     "(^\*|master|dev)" |\
   xargs git branch -d
+}
+
+git_clone() {
+  if [[ ! "${1}" == *"http"* ]]; then
+    echo "Currently only http is supported"
+    exit 10
+  fi
+
+  REPO=$(basename "${1}")
+  ORG=$(basename $(dirname "${1}"))
+  TLD=$(basename $(dirname $(dirname "${1}")))
+  DOMAIN="${TLD/.*/}"
+  DIR="${HOME}/src/${DOMAIN}/${ORG}/${REPO}"
+  if [ -d "${DIR}" ]; then
+    echo "Repo ${1} already exists at '${DIR}'"
+  else
+    mkdir -p "${DIR}"
+    git clone "${1}" "${DIR}"
+  fi
+  cd ${DIR}
 }
 
 parse_git_branch() {
@@ -68,6 +103,7 @@ export EDITOR="vim"
 
 # Terraform
 alias tf="terraform"
+export TFENV_ARCH=arm64
 export TF_CLI_ARGS_apply="-auto-approve=false"
 export TF_CLI_ARGS_destroy="-auto-approve=false"
 export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
@@ -83,6 +119,25 @@ fluxctl_ns() {
 # Ansible
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_STDOUT_CALLBACK=debug
+
+# AWS
+export export AWS_PAGER='less'
+source ~/.bash_aws
+
+get_me_creds() {
+  aws sso get-role-credentials \
+    --account-id $(aws configure get sso_account_id --profile ${AWS_PROFILE}) \
+    --role-name $(aws configure get sso_role_name --profile ${AWS_PROFILE}) \
+    --access-token $(find ~/.aws/sso/cache -type f ! -name "botocore*.json" | xargs jq -r .accessToken) \
+    --region $(aws configure get region --profile ${AWS_PROFILE}) |\
+  jq -r '.roleCredentials |
+      {
+        "AWS_ACCESS_KEY_ID": .accessKeyId,
+        "AWS_SECRET_ACCESS_KEY": .secretAccessKey,
+        "AWS_SESSION_TOKEN": .sessionToken,
+        "AWS_CREDENTIALS_EXPIRATION": (.expiration / 1000 | todate)
+      } | keys[] as $k | "export \($k)=\(.[$k])"'
+}
 
 # Draw IO
 drawio() {
@@ -114,7 +169,7 @@ diff_sxs() {
   diff \
   --width=$COLUMNS \
   --side-by-side \
-  --color
+  --color $@
 }
 
 # Find and Replace
@@ -135,6 +190,15 @@ find_replace_string() {
   # s == "dot matches new line"
   perl -0 -p -i -e "s|$1|$2|gs" \
   $(find . -type f -not -path '*/\.*')
+}
+
+aws_decode() {
+  aws sts \
+  decode-authorization-message \
+  --encoded-message \
+  $@ |\
+  jq -r '.DecodedMessage | fromjson' |\
+  yq -P '.' -
 }
 
 # Eternal bash history.
@@ -169,6 +233,26 @@ fjira() {
     --exit-0
 }
 
+# jq repl
+# https://github.com/junegunn/dotfiles/blob/057ee47465e43aafbd20f4c8155487ef147e29ea/bashrc#L449-L463
+fjq() {
+  local TEMP QUERY
+  TEMP=$(mktemp -t fjq)
+  cat > "$TEMP"
+  QUERY=$(
+    jq -C . "$TEMP" |
+      fzf \
+      --reverse \
+      --ansi \
+      --prompt 'jq> ' --query '.' \
+      --preview "set -x; jq -C {q} \"$TEMP\"" \
+      --header 'Press CTRL-Y to copy expression to the clipboard and quit' \
+      --bind 'ctrl-y:execute-silent(echo -n {q} | pbcopy)+abort' \
+      --print-query | head -1
+  )
+  [ -n "$QUERY" ] && jq "$QUERY" "$TEMP"
+}
+
 # SSH
 if [ ! -S ~/.ssh/ssh_auth_sock ]; then
   eval `ssh-agent`
@@ -179,10 +263,10 @@ ssh-add -l > /dev/null || ssh-add
 
 GITHUB_SSH_FINGERPRINT=$(ssh-keygen -E sha256 -lf ~/.ssh/GitHub)
 if ! [[ $(ssh-add -l | grep "${GITHUB_SSH_FINGERPRINT}") ]]; then
-  ssh-add -K ~/.ssh/GitHub
+  ssh-add --apple-use-keychain ~/.ssh/GitHub
 fi
 
-BITBUCKET_SSH_FINGERPRINT=$(ssh-keygen -E sha256 -lf ~/.ssh/bitbucket)
+BITBUCKET_SSH_FINGERPRINT=$(ssh-keygen -E sha256 -lf ~/.ssh/bitbucket |cut -d' ' -f1-3,6 )
 if ! [[ $(ssh-add -l | grep "${BITBUCKET_SSH_FINGERPRINT}") ]]; then
-  ssh-add -K ~/.ssh/bitbucket
+  ssh-add --apple-use-keychain ~/.ssh/bitbucket
 fi

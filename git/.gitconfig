@@ -2,6 +2,9 @@
 	name = David Beck
 [url "git@github.com:"]
 	insteadOf = https://github.com/
+[alias]
+  cat = "!git show \"$1:$2\" #"
+  base = "rev-parse --show-toplevel"
 [diff "dyff"]
 	command = "echo \"$2\n$5\"; \
 	           dyff \

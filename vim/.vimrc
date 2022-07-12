@@ -8,17 +8,17 @@ call plug#begin('~/.vim/plugged')
       !./install.py
     endif
   endfunction
-  
+
   " Syntax
     " Highlighting
-    Plug 'pearofducks/ansible-vim'                       " syntax plugin for Ansible 2.0
+    Plug 'pearofducks/ansible-vim'                          " syntax plugin for Ansible 2.0
     Plug 'PProvost/vim-ps1',
-      \ { 'do': 'cp -r ~/.vim/monkey-patch/vim-ps1/ .' } " syntax coloring and indenting for Windows PowerShell
-    Plug 'fatih/vim-go', { 'for': ['go'] }               " syntax plugin for Go
+      \ { 'do': 'cp -r ~/.vim/monkey-patch/vim-ps1/ .' }    " syntax coloring and indenting for Windows PowerShell
+    Plug 'fatih/vim-go', { 'for': ['go'] }                  " syntax plugin for Go
       let g:go_fmt_command = "goimports"
-    Plug 'b4b4r07/vim-hcl', { 'for': ['hcl','terraform'] }           " syntax plugin for HCL
-    Plug 'hashivim/vim-terraform', { 'for': ['hcl','terraform'] }    " syntax plugin for Terraform
-      let g:terraform_fmt_on_save = 1 
+    Plug 'b4b4r07/vim-hcl', { 'for': ['hcl'] }              " syntax plugin for HCL
+    Plug 'hashivim/vim-terraform', { 'for': ['terraform'] } " syntax plugin for Terraform
+      let g:terraform_fmt_on_save = 0
 
     " Formatting
     Plug 'tpope/tpope-vim-abolish'    " Support for Case Sensitive Replace
@@ -31,9 +31,24 @@ call plug#begin('~/.vim/plugged')
       au BufWrite * :Autoformat
     Plug 'https://gist.github.com/TechIsCool/0be56d68fbf9eb767e595b4c4df0508b.git',
       \ { 'as': 'SortGroup', 'do': 'mkdir plugin; mv -f *.vim plugin/', 'on': 'SortGroup' } " Sort Multi Line Groups
-    
+
+    " Language Server Support
+    Plug 'prabirshrestha/vim-lsp'              " Language Server for vim
+      let g:lsp_diagnostics_echo_cursor = 1
+    Plug 'prabirshrestha/async.vim'            " Normalize async job control api for vim
+    Plug 'prabirshrestha/asyncomplete.vim'     " Async auto completion
+    Plug 'prabirshrestha/asyncomplete-lsp.vim' " Async auto complete for Language Server
+      " Terraform
+      if executable('terraform-lsp')
+          au User lsp_setup call lsp#register_server({
+              \ 'name': 'terraform-lsp',
+              \ 'cmd': {server_info->['terraform-lsp', 'serve']},
+              \ 'whitelist': ['terraform', 'hcl'],
+              \ })
+      endif
+
     " Code Checkers
-    Plug 'scrooloose/syntastic'                    " syntax checking
+    Plug 'scrooloose/syntastic' " syntax checking
       let g:syntastic_ruby_checkers            = ['rubocop']
       let g:syntastic_ruby_rubocop_exec        = '/usr/local/bin/cookstyle'
       let g:syntastic_python_checkers          = ['flake8']
@@ -42,23 +57,25 @@ call plug#begin('~/.vim/plugged')
       let g:syntastic_check_on_open            = 1
       let g:syntastic_check_on_wq              = 0
       set statusline+=%{SyntasticStatuslineFlag()} " show Syntastic flag
-    Plug 'https://gist.github.com/TechIsCool/0e080232d9e8871f9611a4e9a6f0ab91.git',
-      \ { 'as': 'TerraformCompleteOpenDoc', 'do': 'mkdir plugin; mv -f *.vim plugin/', 'for': ['hcl','terraform']} " Terraform OpenDoc
-      noremap <buffer><silent> <Leader>o :call terraformcomplete#OpenDoc()<CR>
-  
+      let g:syntastic_disabled_filetypes=['terraform','hcl']
+    " Replaced by Language Server
+    " Plug 'https://gist.github.com/TechIsCool/0e080232d9e8871f9611a4e9a6f0ab91.git',
+    "   \ { 'as': 'TerraformCompleteOpenDoc', 'do': 'mkdir plugin; mv -f *.vim plugin/', 'for': ['hcl','terraform']} " Terraform OpenDoc
+    "   noremap <buffer><silent> <Leader>o :call terraformcomplete#OpenDoc()<CR>
+
   " Control Plugins
-  Plug 'kien/ctrlp.vim'                                         " Fuzzy file, buffer, mru, tag, etc finder. 
+  Plug 'kien/ctrlp.vim'                                         " Fuzzy file, buffer, mru, tag, etc finder.
   Plug 'tpope/vim-commentary'                                   " Comment stuff out.
   Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') } " fast, as-you-type, fuzzy-search code completion engin
       let g:enable_ycm_at_startup = 0
-  
+
   " Git Plugins
   Plug 'airblade/vim-gitgutter', { 'commit': 'c92f61acdc1841292b539a8515a88ed811eafa3f' } " git diff in the 'gutter' (sign column)
       let g:gitgutter_max_signs = 10000
   Plug 'tpope/vim-fugitive'     " View any blob, tree, commit, or tag in the repository
-  
+
   " UI Plugins
-  Plug 'itchyny/lightline.vim'            " light and configurable statusline/tabline 
+  Plug 'itchyny/lightline.vim'            " light and configurable statusline/tabline
   Plug 'altercation/vim-colors-solarized' " Solarized Colorscheme
 
   " YAML Plugins
@@ -85,12 +102,20 @@ set backspace=indent,eol,start " Allows backspace to delete over line breaks
 set background=dark            " informs vim that the background color is dark
 
 " Expansion
-autocmd FileType sh iabbrev <buffer> shebang #!/bin/bash
+autocmd BufNewFile *.sh call append(0,'#!/bin/bash')
+autocmd BufNewFile *.py call append(0,'#!/bin/python')
 autocmd FileType xml setlocal shiftwidth=2 softtabstop=2 expandtab
 
+" Cleanliness
+autocmd FileType sh,yaml autocmd BufWritePre <buffer> %s/\s\+$//e " Remove trailing whitespace
+
+" Color
 silent! colorscheme solarized
 
+" Syntax
 syntax enable " enables syntax highlighting
+highlight ExtraWhitespace ctermbg=red guibg=red
+" autocmd Syntax * syn match ExtraWhitespace /\s\+$/ containedin=ALL
 
 au BufReadPost Jenkinsfile set syntax=groovy " enables syntax for Jenkinsfile
 au BufReadPost Jenkinsfile set filetype=groovy

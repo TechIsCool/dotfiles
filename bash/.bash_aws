@@ -1,0 +1,36 @@
+expand_aws_attribute(){
+while read LINE
+do
+  # set -x
+  DIR_PATH="${HOME}/src/github/iann0036/iam-dataset"
+  if [ -d "${DIR_PATH}" ]; then
+    CLEAN=$( echo "${LINE}" | tr -d '*')
+    RAW="-r"
+    if [[ "${CLEAN}" =~ ^\".*\"$ ]]; then
+      CLEAN=$(echo ${CLEAN} | cut -d \" -f2)
+      RAW=""
+    fi
+    if [[ "${CLEAN}" =~ ^\".*\",$ ]]; then
+      CLEAN=$(echo ${CLEAN} | cut -d \" -f2)
+      RAW=""
+    fi
+
+    RESULTS=$(cat "${DIR_PATH}/map.json" |\
+    jq \
+      ${RAW} \
+      --arg key "${CLEAN}" \
+      '.sdk_method_iam_mappings[][] |
+       select(.action | startswith($key)) |
+       .action ' | sort | uniq
+    )
+
+    if [[ "${RAW}" == "" ]]; then
+      echo "${RESULTS}" | sort | uniq | sed 's/$/,/'
+    else
+     echo "${RESULTS}" | sort | uniq
+    fi
+ else
+   echo "Please Clone 'https://github.com/iann0036/iam-dataset'"
+  fi
+done < "${1:-/dev/stdin}"
+}

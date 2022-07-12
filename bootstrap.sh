@@ -52,14 +52,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
     # TaskBar
       # Disable siri
-      defaults write com.apple.systemuiserver "NSStatusItem Visible Siri" -bool false
+      defaults write com.apple.Siri StatusMenuVisible -int 0
+      # defaults write com.apple.siri "StatusMenuVisible" -int 0
+      # defaults write com.apple.systemuiserver "NSStatusItem Visible Siri" -bool false
 
       # Enable battery Percent
-      defaults write com.apple.menuextra.battery ShowPercent YES
+      defaults write ${HOME}/Library/Preferences/ByHost/com.apple.controlcenter.plist BatteryShowPercentage -bool true
 
       # Disable Notifications
-      defaults write ~/Library/Preferences/ByHost/com.apple.notificationcenterui dndStart -integer 1
-      defaults write ~/Library/Preferences/ByHost/com.apple.notificationcenterui dndEnd -integer 1439
+      defaults write ${HOME}/Library/Preferences/ByHost/com.apple.notificationcenterui dndStart -integer 1
+      defaults write ${HOME}/Library/Preferences/ByHost/com.apple.notificationcenterui dndEnd -integer 1439
 
 
     # Dock
@@ -79,6 +81,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
 
     # Keyboard
+      # When pressing fn/globe by itself, do nothing
+      defaults write com.apple.HIToolbox AppleFnUsageType -int 0
+
       # command:@, control:^, option:~, shift:$
       # Command + L = lock
       defaults write -g NSUserKeyEquivalents '{ \
@@ -109,6 +114,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
       # Disable iTunes Music
       defaults write com.apple.iTunes disableAppleMusic -bool true
 
+   # zoom.us
+     # Disable Dual Screen
+     defaults write /Library/Preferences/us.zoom.config.plist ZDualMonitorOn -bool false
 
     # Restart UI Elements after Changes
     for APP in \
@@ -121,13 +129,19 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     done
 EOF
 
-  Brew
-  pushd ${DOTFILE_PATH}/brew
-    cat taps.txt | xargs brew tap
-    cat packages.txt | xargs -I {} sh -c "brew list {} || brew install"
-    cat casks.txt | xargs brew cask install
-    cat links.txt | xargs brew link --force
-  popd
+  if [[ $(sysctl -in sysctl.proc_translated) = 0 && $(uname -m) != "x86_64" ]]; then
+    # Intel CPU
+    # Brew
+    pushd ${DOTFILE_PATH}/brew
+      cat taps.txt | xargs brew tap
+      cat packages.txt | xargs -I {} sh -c "brew list {} || brew install"
+      cat casks.txt | xargs brew cask install
+      cat links.txt | xargs brew link --force
+    popd
+  else
+    # Apple Silicon CPU
+    echo 'Skipped Brew due to Applie Silicon'
+  fi
 fi
 
 # Git Config
