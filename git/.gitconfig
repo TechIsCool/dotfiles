@@ -5,21 +5,13 @@
 [alias]
   cat = "!git show \"$1:$2\" #"
   base = "rev-parse --show-toplevel"
-[diff "dyff"]
-	command = "echo \"$2\n$5\"; \
-	           dyff \
-		     --color on \
-		     --omit-header \
-		     --detect-kubernetes \
-		     between \
-		     \"$2\" \"$5\" \
-		   || git diff \
-		     --no-ext-diff \
-		     --no-index \
-		     \"$2\" \"$5\" \
-		   || exit_code=$?"
+  ndiff = "diff --no-ext-diff"
+[diff "git-dyff"]
+	command = "git-dyff --args"
 [core]
 	attributesfile = ~/.gitattributes
 	excludesfile = ~/.gitignore
 [include]
 	path = ~/.gitcompany
+[push]
+	autoSetupRemote = true

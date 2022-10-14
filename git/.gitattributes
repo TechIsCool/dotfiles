@@ -1,1 +1,4 @@
-*.yaml diff=dyff
+*.yaml diff=git-dyff
+*.json diff=git-dyff
+*.tf diff=git-dyff
+*.csv diff=git-dyff

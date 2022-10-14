@@ -1,5 +1,4 @@
 ansible
-awless
 aws-okta
 awscli
 bash
@@ -25,6 +24,7 @@ go@1.16
 govendor
 gox
 graphviz
+hcl2json
 helm
 hub
 istioctl
@@ -33,6 +33,7 @@ jq
 kubectx
 libgcrypt
 libpq
+miller
 packer
 pcre2
 pv

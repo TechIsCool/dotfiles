@@ -145,6 +145,7 @@ EOF
 fi
 
 # Git Config
+link "${DOTFILE_PATH}/git/git-dyff" '/usr/local/bin/git-dyff'
 link "${DOTFILE_PATH}/git/.gitattributes" "${HOME}/.gitattributes"
 link "${DOTFILE_PATH}/git/.gitignore" "${HOME}/.gitignore"
 link "${DOTFILE_PATH}/git/.gitconfig" "${HOME}/.gitconfig"

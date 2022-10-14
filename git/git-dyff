@@ -1,0 +1,92 @@
+#!/bin/bash
+DEPENDENCIES=(
+'dyff https://github.com/homeport/dyff'
+'hcl2json https://github.com/tmccombs/hcl2json'
+'mlr https://github.com/johnkerl/miller'
+'jq https://github.com/stedolan/jq'
+)
+
+for DEP in "${DEPENDENCIES[@]}"; do
+  APP=$(echo "${DEP}" | cut -d' ' -f1)
+  if [[ ! $(command -v ${APP}) ]] ; then
+      URL=$(echo "${DEP}" | cut -d' ' -f2)
+      echo "You do not have ${APP} installed."
+      echo "Please install it from ${URL}"
+      exit 1
+  fi
+done
+
+TYPE=''
+ARGS=''
+while [ "$1" != "" ];
+do
+  case $1 in
+    -v | --version )
+        echo "Version: 0.0.1"
+        ;;
+    -t | --type )
+        shift
+          TYPE="$1"
+        ;;
+    -a | --args )
+        ARGS=$1;shift
+        ORG_FILE_NAME=$1; shift
+        ORG_FILE_PATH=$1; shift
+        ORG_SHA=$1; shift
+        ORG_MOD=$1; shift
+        NEW_FILE_PATH=$1; shift
+        NEW_SHA=$1; shift
+        NEW_MOD=$1
+        ;;
+    -h | --help )
+         echo "Usage: $(basename "$0") [OPTIONS]"
+         echo "OPTION includes:"
+         echo "   -a | --args (required) - 7 unnamed args from git normally defined at the end of other flags"
+         echo "   -v | --version - prints out version information for this script"
+         echo "   -h | --help - displays this message"
+         exit
+      ;;
+    * )
+        echo "Invalid option: $1"
+        exit
+       ;;
+  esac
+  shift
+done
+
+if [[ "${ARGS}" == '' ]]; then
+  ${0} --help
+  exit
+fi
+
+if [[ "${TYPE}" == '' ]]; then
+   TYPE=$(basename "${ORG_FILE_PATH##*.}")
+fi
+
+case "${TYPE}" in
+  tf | hcl )
+    dyff --color on --omit-header --detect-kubernetes \
+    between \
+      <(hcl2json "${ORG_FILE_PATH}") \
+      <(hcl2json "${NEW_FILE_PATH}") ||\
+    git diff --no-ext-diff --no-index \
+    "${ORG_FILE_PATH}" "${NEW_FILE_PATH}"
+    ;;
+  csv )
+    dyff --color on --omit-header --detect-kubernetes \
+    between \
+      <(mlr --c2j cat "${ORG_FILE_PATH}" | jq 'del(..|select(. == ""))') \
+      <(mlr --c2j cat "${NEW_FILE_PATH}" | jq 'del(..|select(. == ""))') ||\
+    git diff --no-ext-diff --no-index \
+    "${ORG_FILE_PATH}" "${NEW_FILE_PATH}"
+    ;;
+  * )
+    echo "TYPE: '${TYPE}' was unknown defaulting to 'yaml'"
+    dyff --color on --omit-header --detect-kubernetes \
+    between \
+      "${ORG_FILE_PATH}" \
+      "${NEW_FILE_PATH}" ||\
+    git diff --no-ext-diff --no-index \
+    "${ORG_FILE_PATH}" "${NEW_FILE_PATH}"
+   ;;
+esac
