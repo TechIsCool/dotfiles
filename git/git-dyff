@@ -1,18 +1,14 @@
 #!/bin/bash
-DEPENDENCIES=(
-'dyff https://github.com/homeport/dyff'
-'hcl2json https://github.com/tmccombs/hcl2json'
-'mlr https://github.com/johnkerl/miller'
-'jq https://github.com/stedolan/jq'
-)
-
-for DEP in "${DEPENDENCIES[@]}"; do
-  APP=$(echo "${DEP}" | cut -d' ' -f1)
+for DEP in \
+  'dyff https://github.com/homeport/dyff' \
+  'hcl2json https://github.com/tmccombs/hcl2json' \
+  'mlr https://github.com/johnkerl/miller' \
+  'jq https://github.com/stedolan/jq' \
+; do APP="${DEP% *}" URL="${DEP#* }"
   if [[ ! $(command -v ${APP}) ]] ; then
-      URL=$(echo "${DEP}" | cut -d' ' -f2)
-      echo "You do not have ${APP} installed."
-      echo "Please install it from ${URL}"
-      exit 1
+    echo "You do not have ${APP} installed."
+    echo "Please install it from ${URL}"
+    exit 1
   fi
 done
 
@@ -22,11 +18,20 @@ while [ "$1" != "" ];
 do
   case $1 in
     -v | --version )
-        echo "Version: 0.0.1"
+        echo "Version: 0.1.0";
+        exit
         ;;
     -t | --type )
         shift
-          TYPE="$1"
+        TYPE="$1"
+        ;;
+    --org-file )
+        shift
+        ORG_FILE_PATH="$1"
+        ;;
+    --new-file )
+        shift
+        NEW_FILE_PATH="$1"
         ;;
     -a | --args )
         ARGS=$1;shift
@@ -39,28 +44,45 @@ do
         NEW_MOD=$1
         ;;
     -h | --help )
+         echo "Usage: $(basename "$0") ./original_file ../new_file"
          echo "Usage: $(basename "$0") [OPTIONS]"
          echo "OPTION includes:"
-         echo "   -a | --args (required) - 7 unnamed args from git normally defined at the end of other flags"
-         echo "   -v | --version - prints out version information for this script"
-         echo "   -h | --help - displays this message"
+         echo "   -a | --args      - 7 unnamed args from git normally defined at the end of other flags"
+         echo "      |               https://git-scm.com/docs/git#Documentation/git.txt-codeGITEXTERNALDIFFcode"
+         echo "   -v | --version   - prints out version information for this script"
+         echo "   -h | --help      - displays this message"
+         echo "      | --org-file  - sets the original file path, same as -a \${2}"
+         echo "      | --new-file  - sets the new file path, same as -a \${5}"
+         echo
+         echo "POSITIONAL Arguments: If you include only $(basename "$0") with two positional arguements."
+         echo "                      It will be assumed you want to compare that them."
+         echo "NOTE: --args and --org-file, --new-file are Mutually exclusive"
          exit
       ;;
     * )
-        echo "Invalid option: $1"
-        exit
+        if [[ ${#} == 2 ]]; then
+          ORG_FILE_PATH="$1"; shift
+          NEW_FILE_PATH="$1"
+        else
+          echo "Invalid option: $1"
+          exit
+        fi
        ;;
   esac
   shift
 done
 
 if [[ "${ARGS}" == '' ]]; then
-  ${0} --help
-  exit
+  if ([[ "${ORG_FILE_NAME}" == "" ]] || [[ "${NEW_FILE_NAME}" == "" ]]); then
+    ${0} --help
+    exit
+  fi
 fi
 
 if [[ "${TYPE}" == '' ]]; then
-   TYPE=$(basename "${ORG_FILE_PATH##*.}")
+  TYPE=$(basename "${ORG_FILE_PATH##*.}")
+elif [[ "${TYPE}" == 'null' ]]; then
+  TYPE=$(basename "${ORG_FILE_NAME##*.}")
 fi
 
 case "${TYPE}" in
