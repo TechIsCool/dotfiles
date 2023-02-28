@@ -1,8 +1,6 @@
 ﻿#!/bin/sh -
 
-link() {
-  FROM="$1"
-  TO="$2"
+link() { FROM="${1}"; TO="${2}";
   echo "Linking '${FROM}' to '${TO}'"
   if [ -L "${TO}" ]; then
     rm -f "${TO}"
@@ -22,7 +20,7 @@ for LOCATION in $(find bash -name '.*' ! -name '.*.tmpl'); do
 done
 
 # Copy '.tmpl' since they are considered secure
-for LOCATION in $(find bash -name '*.tmpl'); do
+for LOCATION in $(find bash -name '.*.tmpl'); do
   FILE="${LOCATION##*/}"
   FILE="${FILE/%.tmpl}"
   cp -n "${DOTFILE_PATH}/${LOCATION}" "${HOME}/${FILE}" || true

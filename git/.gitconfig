@@ -2,16 +2,21 @@
 	name = David Beck
 [url "git@github.com:"]
 	insteadOf = https://github.com/
-[alias]
-  cat = "!git show \"$1:$2\" #"
-  base = "rev-parse --show-toplevel"
-  ndiff = "diff --no-ext-diff"
-[diff "git-dyff"]
-	command = "git-dyff --args"
 [core]
 	attributesfile = ~/.gitattributes
 	excludesfile = ~/.gitignore
-[include]
-	path = ~/.gitcompany
 [push]
 	autoSetupRemote = true
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[alias]
+	cat = "!git show \"$1:$2\" #"
+	base = "rev-parse --show-toplevel"
+	ndiff = "diff --no-ext-diff"
+[diff "git-dyff"]
+	command = "git-dyff --args"
+[include]
+	path = ~/.gitcompany
