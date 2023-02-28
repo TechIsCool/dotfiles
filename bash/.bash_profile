@@ -1,3 +1,6 @@
+# Global Tools
+log_command(){ history -s ${@} && ${@} || return; }
+
 # Import Tokens, Company Settings and etc.
 source ~/.bash_secure
 source ~/.bash_company
@@ -12,28 +15,38 @@ if [[ ! "$PATH" == */usr/local/opt/fzf/bin* ]]; then
 fi
 
 zdd() {
-  local dir
-  dir="$(
-    find "${1:-.}" -path '*/\.*' -prune -o -type d -print 2> /dev/null \
-      | fzf +m \
-          --preview='tree -C {} | head -n $FZF_PREVIEW_LINES' \
-          --preview-window='right:hidden:wrap' \
-          --bind=ctrl-v:toggle-preview \
-          --bind=ctrl-x:toggle-sort \
-          --header='(view:ctrl-v) (sort:ctrl-x)' \
-  )" || return
-  history -s cd "$dir" && cd "$dir" || return
+  local DIR
+  DIR=$(
+    find "${1:-.}" -path '*/\.*' -prune -o -type d -print 2> /dev/null |\
+      fzf +m \
+        --preview='tree -C {} | head -n $FZF_PREVIEW_LINES' \
+        --preview-window='right:hidden:wrap' \
+        --bind=ctrl-v:toggle-preview \
+        --bind=ctrl-x:toggle-sort \
+        --header='(view:ctrl-v) (sort:ctrl-x)' \
+    ) || return
+  log_command cd "${DIR}"
 }
 
 fvim() {
   local IFS=$'\n'
+  if [[ -f  ".terraform/modules/modules.json" ]]; then
+    local CUSTOM_DIRS=$(
+      cat '.terraform/modules/modules.json'  |\
+      jq -r '.Modules[].Dir' | sort | uniq
+    )
+  fi
+
   local FILES=$(
+    find ${CUSTOM_DIRS:-.} -not -path './.*' -type f -print 2> /dev/null |\
     fzf-tmux \
       --query="$1" \
       --multi \
       --select-1 \
       --exit-0)
-  [[ -n "$FILES" ]] && ${EDITOR:-vim} ${FILES[@]}
+  if [[ -n "${FILES}" ]]; then
+    log_command ${EDITOR:-vim} ${FILES[@]}
+  fi
 }
 bind -x '"\C-p": fvim'
 
@@ -53,8 +66,8 @@ strip_colors() {
 alias tac="sed '1!G;h;\$!d'"
 
 # GO
-export GOPATH="$HOME/src/go"
-export PATH="$GOPATH/bin:$PATH"
+export GOPATH="${HOME}/src/go"
+export PATH="${GOPATH}/bin:${PATH}"
 export GODEBUG=asyncpreemptoff=1 # https://yaleman.org/post/2021/2021-01-01-apple-m1-terraform-and-golang/
 
 # GIT
@@ -94,7 +107,7 @@ parse_git_branch() {
 
 # Change to Root of Repo
 cdg() {
-  cd $(git rev-parse --show-toplevel)
+  log_command cd $(git rev-parse --show-toplevel)
 }
 
 # VIM
@@ -106,14 +119,14 @@ alias tf="terraform"
 export TFENV_ARCH=arm64
 export TF_CLI_ARGS_apply="-auto-approve=false"
 export TF_CLI_ARGS_destroy="-auto-approve=false"
-export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
+export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
 source ~/.bash_terraform
 
 # Kubernets
 fluxctl_ns() {
   fluxctl \
     --k8s-fwd-ns $(kubens -c) \
-  $@
+  ${@}
 }
 
 # Ansible
@@ -131,35 +144,38 @@ get_me_creds() {
     --access-token $(find ~/.aws/sso/cache -type f ! -name "botocore*.json" | xargs jq -r .accessToken) \
     --region $(aws configure get region --profile ${AWS_PROFILE}) |\
   jq -r '.roleCredentials |
-      {
-        "AWS_ACCESS_KEY_ID": .accessKeyId,
-        "AWS_SECRET_ACCESS_KEY": .secretAccessKey,
-        "AWS_SESSION_TOKEN": .sessionToken,
-        "AWS_CREDENTIALS_EXPIRATION": (.expiration / 1000 | todate)
-      } | keys[] as $k | "export \($k)=\(.[$k])"'
+    {
+      "AWS_ACCESS_KEY_ID": .accessKeyId,
+      "AWS_SECRET_ACCESS_KEY": .secretAccessKey,
+      "AWS_SESSION_TOKEN": .sessionToken,
+      "AWS_CREDENTIALS_EXPIRATION": (.expiration / 1000 | todate)
+    }
+    | keys[] as $k
+    | "export \($k)=\(.[$k])"
+  '
 }
 
 # Draw IO
 drawio() {
-  { /Applications/draw.io.app/Contents/MacOS/draw.io -c $@ & } 2> /dev/null
+  { /Applications/draw.io.app/Contents/MacOS/draw.io -c ${@} & } 2> /dev/null
 }
 
 # Typora
 typora() {
-  if [ "$#" -eq 0 ]; then
+  if [ "${#}" -eq 0 ]; then
     open -a typora .
   else
-    open -a typora $@
+    open -a typora ${@}
   fi
 }
 
 # Ruby
-export PATH="$HOME/.rbenv/bin:$PATH"
+export PATH="${HOME}/.rbenv/bin:${PATH}"
 eval "$(rbenv init -)"
 
 # Python
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
+export PYENV_ROOT="${HOME}/.pyenv"
+export PATH="${PYENV_ROOT}/bin:${PATH}"
 eval "$(pyenv init -)"
 alias py="pipenv run python"
 
@@ -167,28 +183,28 @@ alias py="pipenv run python"
 unalias diff_sxs 2> /dev/null
 diff_sxs() {
   diff \
-  --width=$COLUMNS \
+  --width=${COLUMNS} \
   --side-by-side \
-  --color $@
+  --color ${@}
 }
 
 # Find and Replace
 regex_replace() {
   perl -p -i -e \
-  "s|$1|$2|g"
+  "s|${1}|${2}|g"
 }
 
 find_replace() {
   # Single Line Match
   # Exclude dot files/folders
-  perl -p -i -e "s|$1|$2|g" \
+  perl -p -i -e "s|${1}|${2}|g" \
   $(find . -type f -not -path '*/\.*')
 }
 find_replace_string() {
   # File is String with \n as line return
   # Exclude dot files/folders
   # s == "dot matches new line"
-  perl -0 -p -i -e "s|$1|$2|gs" \
+  perl -0 -p -i -e "s|${1}|${2}|gs" \
   $(find . -type f -not -path '*/\.*')
 }
 
@@ -196,7 +212,7 @@ aws_decode() {
   aws sts \
   decode-authorization-message \
   --encoded-message \
-  $@ |\
+  ${@} |\
   jq -r '.DecodedMessage | fromjson' |\
   yq -P '.' -
 }
@@ -207,15 +223,29 @@ export HISTSIZE=
 export HISTTIMEFORMAT="[%F %T] "
 export HISTCONTROL='ignorespace:ignoredups'
 export HISTFILE=~/.bash_eternal_history
-PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
+PROMPT_COMMAND="history -a; ${PROMPT_COMMAND}"
 
 # Shell
 export CLICOLOR=1
 export PS1="\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\]  $ "
 
+# Vault
+vault_patch(){
+  vault read \
+    ${1} \
+    -format=json |\
+  jq .data |\
+  vault write \
+    ${1} \
+    - \
+    ${@:2}
+}
+
 # FZF
 # bind -r "\C-i" #  unbind accept-line
 # bind -x '"\C-i": fjira'
+jira_ticket_id() { awk -F ':' '{print $1}'; }
+
 fjira() {
   local IFS=$'\n'
   jira list \
@@ -238,25 +268,28 @@ fjira() {
 fjq() {
   local TEMP QUERY
   TEMP=$(mktemp -t fjq)
-  cat > "$TEMP"
+  cat > "${TEMP}"
   QUERY=$(
-    jq -C . "$TEMP" |
+    jq -C . "${TEMP}" |
       fzf \
       --reverse \
       --ansi \
       --prompt 'jq> ' --query '.' \
-      --preview "set -x; jq -C {q} \"$TEMP\"" \
+      --preview "set -x; jq -C {q} \"${TEMP}\"" \
       --header 'Press CTRL-Y to copy expression to the clipboard and quit' \
       --bind 'ctrl-y:execute-silent(echo -n {q} | pbcopy)+abort' \
       --print-query | head -1
   )
-  [ -n "$QUERY" ] && jq "$QUERY" "$TEMP"
+  [ -n "${QUERY}" ] && jq "${QUERY}" "${TEMP}"
 }
+
+# GitHub
+alias hub='gh'
 
 # SSH
 if [ ! -S ~/.ssh/ssh_auth_sock ]; then
   eval `ssh-agent`
-  ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock
+  ln -sf "${SSH_AUTH_SOCK}" ~/.ssh/ssh_auth_sock
 fi
 export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
 ssh-add -l > /dev/null || ssh-add
