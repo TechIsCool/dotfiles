@@ -12,40 +12,41 @@ for DEP in \
   fi
 done
 
+# set -x
 TYPE=''
 ARGS=''
-while [ "$1" != "" ];
+while [[ "${1}" != "" ]];
 do
-  case $1 in
+  case "${1}" in
     -v | --version )
-        echo "Version: 0.1.0";
+        echo "Version: 0.1.2";
         exit
         ;;
     -t | --type )
         shift
-        TYPE="$1"
+        TYPE="${1}"
         ;;
     --org-file )
         shift
-        ORG_FILE_PATH="$1"
+        ORG_FILE_PATH="${1}"
         ;;
     --new-file )
         shift
-        NEW_FILE_PATH="$1"
+        NEW_FILE_PATH="${1}"
         ;;
     -a | --args )
-        ARGS=$1;shift
-        ORG_FILE_NAME=$1; shift
-        ORG_FILE_PATH=$1; shift
-        ORG_SHA=$1; shift
-        ORG_MOD=$1; shift
-        NEW_FILE_PATH=$1; shift
-        NEW_SHA=$1; shift
-        NEW_MOD=$1
+        ARGS="${1}"; shift
+        ORG_FILE_NAME="${1}"; shift
+        ORG_FILE_PATH="${1}"; shift
+        ORG_SHA="${1}"; shift
+        ORG_MOD="${1}"; shift
+        NEW_FILE_PATH="${1}"; shift
+        NEW_SHA="${1}"; shift
+        NEW_MOD="${1}"
         ;;
     -h | --help )
-         echo "Usage: $(basename "$0") ./original_file ../new_file"
-         echo "Usage: $(basename "$0") [OPTIONS]"
+         echo "Usage: $(basename "${0}") ./original_file ../new_file"
+         echo "Usage: $(basename "${0}") [OPTIONS]"
          echo "OPTION includes:"
          echo "   -a | --args      - 7 unnamed args from git normally defined at the end of other flags"
          echo "      |               https://git-scm.com/docs/git#Documentation/git.txt-codeGITEXTERNALDIFFcode"
@@ -54,17 +55,17 @@ do
          echo "      | --org-file  - sets the original file path, same as -a \${2}"
          echo "      | --new-file  - sets the new file path, same as -a \${5}"
          echo
-         echo "POSITIONAL Arguments: If you include only $(basename "$0") with two positional arguements."
+         echo "POSITIONAL Arguments: If you include only $(basename "${0}") with two positional arguements."
          echo "                      It will be assumed you want to compare that them."
          echo "NOTE: --args and --org-file, --new-file are Mutually exclusive"
          exit
       ;;
     * )
-        if [[ ${#} == 2 ]]; then
-          ORG_FILE_PATH="$1"; shift
-          NEW_FILE_PATH="$1"
+        if [[ "${#}" == 2 ]]; then
+          ORG_FILE_PATH="${1}"; shift
+          NEW_FILE_PATH="${1}"
         else
-          echo "Invalid option: $1"
+          echo "Invalid option: ${1}"
           exit
         fi
        ;;
@@ -73,15 +74,17 @@ do
 done
 
 if [[ "${ARGS}" == '' ]]; then
-  if ([[ "${ORG_FILE_NAME}" == "" ]] || [[ "${NEW_FILE_NAME}" == "" ]]); then
+  if ([[ "${ORG_FILE_PATH}" == "" ]] || [[ "${NEW_FILE_PATH}" == "" ]]); then
     ${0} --help
     exit
   fi
 fi
 
 if [[ "${TYPE}" == '' ]]; then
-  TYPE=$(basename "${ORG_FILE_PATH##*.}")
-elif [[ "${TYPE}" == 'null' ]]; then
+  TYPE=$(basename "${ORG_FILE_NAME##*.}")
+fi
+
+if [[ "${TYPE}" == 'null' ]]; then
   TYPE=$(basename "${ORG_FILE_NAME##*.}")
 fi
 
@@ -103,7 +106,9 @@ case "${TYPE}" in
     "${ORG_FILE_PATH}" "${NEW_FILE_PATH}"
     ;;
   * )
-    echo "TYPE: '${TYPE}' was unknown defaulting to 'yaml'"
+    if [[ $TYPE != 'yaml' ]]; then
+      echo "TYPE: '${TYPE}' was unknown defaulting to 'yaml'"
+    fi
     dyff --color on --omit-header --detect-kubernetes \
     between \
       "${ORG_FILE_PATH}" \
