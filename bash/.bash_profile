@@ -14,6 +14,10 @@ if [[ ! "$PATH" == */usr/local/opt/fzf/bin* ]]; then
   export PATH="$PATH:/usr/local/opt/fzf/bin"
 fi
 
+# VIM
+export EDITOR='nvim'
+alias vi="${EDITOR}"
+
 zdd() {
   local DIR
   DIR=$(

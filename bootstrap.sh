@@ -142,6 +142,11 @@ EOF
   fi
 fi
 
+link "${DOTFILE_PATH}" "${HOME}/.dotfiles"
+
+mkdir -p ${HOME}/.config/
+link "${DOTFILE_PATH}/config/nvim" "${HOME}/.config/nvim"
+
 # Git Config
 link "${DOTFILE_PATH}/git/git-dyff" '/usr/local/bin/git-dyff'
 link "${DOTFILE_PATH}/git/.gitattributes" "${HOME}/.gitattributes"
