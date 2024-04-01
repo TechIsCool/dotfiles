@@ -1,7 +1,13 @@
+-- Define filetype overrides before loading plugins
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+	pattern = "*.bash_secure",
+	command = "set filetype=secure",
+})
+
 -- bootstrap lazy.nvim
 require("config.lazy")
 -- require("config.keymaps")
--- require("config.autocmds")
+require("config.autocmds")
 
 -- Set line numbers
 vim.opt.number = true

@@ -47,7 +47,7 @@ tfenv
 tmux
 tree
 upx
-vim
+nvim
 watch
 wdiff
 wget

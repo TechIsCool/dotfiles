@@ -112,6 +112,9 @@ autocmd FileType sh,yaml autocmd BufWritePre <buffer> %s/\s\+$//e " Remove trail
 " Color
 silent! colorscheme solarized
 
+" Secure
+au BufRead,BufNewFile *.bash_secure set filetype=secure
+
 " Syntax
 syntax enable " enables syntax highlighting
 highlight ExtraWhitespace ctermbg=red guibg=red

@@ -1,5 +1,6 @@
 # Global Tools
-log_command(){ history -s ${@} && ${@} || return; }
+log_command() { history -s ${@} && ${@} || return; }
+export_path() { [[ ! "${PATH}" == *"${1}"* ]] && export PATH="${1}:${PATH}" || return; }
 
 # Import Tokens, Company Settings and etc.
 source ~/.bash_secure
@@ -10,9 +11,7 @@ source ~/.bash_company
 [[ $- == *i* ]] && source "/usr/local/opt/fzf/shell/key-bindings.bash" 2> /dev/null
 
 # FZF
-if [[ ! "$PATH" == */usr/local/opt/fzf/bin* ]]; then
-  export PATH="$PATH:/usr/local/opt/fzf/bin"
-fi
+export_path "/usr/local/opt/fzf/bin"
 
 # VIM
 export EDITOR='nvim'
@@ -71,7 +70,7 @@ alias tac="sed '1!G;h;\$!d'"
 
 # GO
 export GOPATH="${HOME}/src/go"
-export PATH="${GOPATH}/bin:${PATH}"
+export_path "${GOPATH}/bin"
 export GODEBUG=asyncpreemptoff=1 # https://yaleman.org/post/2021/2021-01-01-apple-m1-terraform-and-golang/
 
 # GIT
@@ -174,12 +173,13 @@ typora() {
 }
 
 # Ruby
-export PATH="${HOME}/.rbenv/bin:${PATH}"
+export_path "${HOME}/.rbenv/bin"
+
 eval "$(rbenv init -)"
 
 # Python
 export PYENV_ROOT="${HOME}/.pyenv"
-export PATH="${PYENV_ROOT}/bin:${PATH}"
+export_path "${PYENV_ROOT}/bin"
 eval "$(pyenv init -)"
 alias py="pipenv run python"
 
