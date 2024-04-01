@@ -1,43 +1,55 @@
 #!/bin/bash
+#
+# TODO: Check for required binaries without bash builtins
+# terraform, fzf
 set -m
-# trap 'kill $(jobs -p | xargs)' SIGINT SIGHUP SIGTERM EXIT
+[[ ${1} == "" ]] && COMMAND="plan" || COMMAND="${1}"
 
-# TODO: Find out if I can some return while a pipe is open with CAT
-# Terraform returns a successful apply but cat doesn't let go of the pipe
-# To let the subshell return which means the pid get killed
+TMP_DIR=$(mktemp -d /tmp/orbital.XXXXXXXXXX)
 
-TMP_DIR=$( mktemp -d /tmp/orbital.XXXXXXXXXX )
-echo "${TMP_DIR}"
-
-for OBJ in $( find . -type d -depth 1 | fzf --multi | xargs basename ); do
-  echo "${OBJ}" >> "${TMP_DIR}/jobs.txt"
+for OBJ in $(find . -type f -name 'setup.tf' -print0 | xargs -0 dirname | sed -e "s/^\.\///g" | fzf --multi); do
+  echo "${OBJ}" >>"${TMP_DIR}/jobs.txt"
+  mkdir -p "${TMP_DIR}/${OBJ}"
   PIPE="${TMP_DIR}/${OBJ}.pipe"
 
-  mkfifo ${PIPE}
-  touch ${TMP_DIR}/${OBJ}.{stdout,stderr}
+  mkfifo "${PIPE}"
+  touch "${TMP_DIR}/${OBJ}.{stdout,stderr}"
 
   (
-    cd "${PWD}/${OBJ}"
-    terraform init --upgrade
-    echo "Running Terraform Apply for '${OBJ}'"
-    cat "${PIPE}" | terraform apply
-    rm -f "${TMP_DIR}/${OBJ}.pid" # TODO: Why don't we make it here without 'enter'
+     cd "${PWD}/${OBJ}" || { echo "Failed to move into '${PWD}/${OBJ}'"; exit 1; }
+     terraform init --upgrade
+     echo "Running Terraform '${COMMAND}' for '${OBJ}'"
+     cat "${PIPE}" | terraform "${COMMAND}"
+     rm -f "${TMP_DIR}/${OBJ}.pid" "${PIPE}"
+     echo "Task Completed"
   ) \
-  2> ${TMP_DIR}/${OBJ}.stderr \
-  1> ${TMP_DIR}/${OBJ}.stdout \
-  &
-  echo "${!}" > "${TMP_DIR}/${OBJ}.pid"
+     2>"${TMP_DIR}/${OBJ}.stderr" \
+     1>"${TMP_DIR}/${OBJ}.stdout" \
+     &
+
+  echo "${!}" >"${TMP_DIR}/${OBJ}.pid"
 done
 
 cat "${TMP_DIR}/jobs.txt" | fzf \
   --disabled \
-  --scrollbar \
   --bind "enter:execute(echo {q} > ${TMP_DIR}/{}.pipe)" \
-  --preview "tail -f -n +1 ${TMP_DIR}/{}.std*" \
+  --bind 'ctrl-/:toggle-search' \
+  --preview "tail -f -n +1 ${TMP_DIR}/{}.stdout ${TMP_DIR}/{}.stderr" \
   --preview-window 'follow,up,90%'
 
-for PID in $( find "${TMP_DIR}" -name '*.pid' | xargs cat ); do
-  kill -1 -${PID}
+for PIPE in $(find "${TMP_DIR}" -name '*.pipe'); do
+  echo "Asking '${PIPE}' to exit gracefully"
+  echo "" >"${PIPE}"
+done
+
+while [[ $(find "${TMP_DIR}" -name '*.pipe' | wc -l) -gt 0 ]]; do
+  printf '.'
+  sleep 1
+done
+
+for PID in $(find "${TMP_DIR}" -name '*.pid' -print0 | xargs -0 cat); do
+  echo "Killing '${PID}' as it didn't gracefully exit in time"
+  kill -1 -"${PID}" # we kill the process group since we are using subshells
 done
 
 rm -rf "${TMP_DIR}"
