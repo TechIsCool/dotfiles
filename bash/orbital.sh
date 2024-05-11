@@ -1,9 +1,22 @@
 #!/bin/bash
-#
-# TODO: Check for required binaries without bash builtins
-# terraform, fzf
+# shellcheck disable=SC2002
+# TODO:
+#  - If we are going to support passing a custom COMMAND; We should prompt the user
+#    before running the action COMMAND="are you sure?; ${COMMAND}
+#  - Find assumes 'setup.tf' exists but to normalize this command we should that filter
+#  - We should probably add a timeout to the fzf command so that we don't wait forever
+#  - FZF supports updating the query, maybe we can provide status on these jobs.
+#    - Thinking about this something like [Plan] 'top/operations' and then it could be
+#      updated to [Waiting] 'top/operations'. etc This might add to much complexity
+#      but it really could add some fast visability while scrolling around. We could
+#      event have something like [Exited] 'top/operations'
 set -m
-[[ ${1} == "" ]] && COMMAND="plan" || COMMAND="${1}"
+
+INPUT_COMMAND="${1}"
+[[ "${INPUT_COMMAND}" == "plan" ]] && COMMAND="terraform init --upgrade; terraform plan;"
+[[ "${INPUT_COMMAND}" == "apply" ]] && COMMAND="terraform init --upgrade; terraform apply;"
+[[ "${COMMAND}" == "" ]] && { echo "Currently only 'plan' and 'apply' are supported"; exit 1; }
+[[ ! $(command -v fzf) ]] && { echo "You do not have fzf installed."; exit 1; }
 
 TMP_DIR=$(mktemp -d /tmp/orbital.XXXXXXXXXX)
 
@@ -16,17 +29,15 @@ for OBJ in $(find . -type f -name 'setup.tf' -print0 | xargs -0 dirname | sed -e
   touch "${TMP_DIR}/${OBJ}.{stdout,stderr}"
 
   (
-     cd "${PWD}/${OBJ}" || { echo "Failed to move into '${PWD}/${OBJ}'"; exit 1; }
-     terraform init --upgrade
-     echo "Running Terraform '${COMMAND}' for '${OBJ}'"
-     cat "${PIPE}" | terraform "${COMMAND}"
-     rm -f "${TMP_DIR}/${OBJ}.pid" "${PIPE}"
-     echo "Task Completed"
+    cd "${PWD}/${OBJ}" || { echo "Failed to move into '${PWD}/${OBJ}'"; exit 1; }
+    echo "Running '${COMMAND}' for '${OBJ}'"
+    cat "${PIPE}" | eval "${COMMAND}"
+    rm -f "${TMP_DIR}/${OBJ}.pid" "${PIPE}"
+    echo "Task Completed"
   ) \
-     2>"${TMP_DIR}/${OBJ}.stderr" \
-     1>"${TMP_DIR}/${OBJ}.stdout" \
-     &
-
+    2> "${TMP_DIR}/${OBJ}.stderr" \
+    1> "${TMP_DIR}/${OBJ}.stdout" \
+    &
   echo "${!}" >"${TMP_DIR}/${OBJ}.pid"
 done
 
