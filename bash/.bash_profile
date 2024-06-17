@@ -195,21 +195,35 @@ diff_sxs() {
 # Find and Replace
 regex_replace() {
   perl -p -i -e \
-  "s|${1}|${2}|g"
+    "s|${1}|${2}|g"
+}
+
+find_files() {
+  # Exclude dot files/folders
+  FILES=$( [ -t 0 ] || cat )
+  if [[ "${FILES}" == "" ]]; then
+    FILES=$(find "${1:-.}" -type f -not -path '*/\.*')
+  fi
+  echo "${FILES}" |\
+  fzf \
+    --multi \
+    --bind "ctrl-a:toggle-all" \
+    --header='(toggle-all:ctrl-a)'
 }
 
 find_replace() {
   # Single Line Match
   # Exclude dot files/folders
-  perl -p -i -e "s|${1}|${2}|g" \
-  $(find . -type f -not -path '*/\.*')
+  FILES=$(find_files $@)
+  [[ ${FILES} ]] && perl -p -i -e "s|${1}|${2}|g" ${FILES}
 }
+
 find_replace_string() {
   # File is String with \n as line return
   # Exclude dot files/folders
   # s == "dot matches new line"
-  perl -0 -p -i -e "s|${1}|${2}|gs" \
-  $(find . -type f -not -path '*/\.*')
+  FILES=$(find_files $@)
+  [[ ${FILES} ]] && perl -0 -p -i -e "s|${1}|${2}|gs" ${FILES}
 }
 
 aws_decode() {
